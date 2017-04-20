@@ -36,6 +36,8 @@ defmodule TreeTest do
     assert tree.nodes[3].lft === 3
     assert tree.nodes[3].rgt === 4
     assert tree.nodes[3].parent_id === 2
+    
+    assert Tree.add_child_node(tree, 99) |> elem(0) === :error
   end
   
   test "can delete node" do
@@ -53,6 +55,8 @@ defmodule TreeTest do
     assert tree.nodes[1].lft === 1
     assert tree.nodes[1].rgt === 2
     assert tree.nodes[1].parent_id === :none
+    
+    assert Tree.delete(tree, 99) |> elem(0) === :error
   end
   
   test "can move node" do
@@ -76,6 +80,10 @@ defmodule TreeTest do
     assert tree.nodes[3].lft === 2
     assert tree.nodes[3].rgt === 3
     assert tree.nodes[3].parent_id === 1
+    
+    assert Tree.move_to_child_of(tree, 99, 100) |> elem(0) === :error
+    assert Tree.move_to_child_of(tree, 1, 100) |> elem(0) === :error
+    assert Tree.move_to_child_of(tree, 1, 99) |> elem(0) === :error
   end
   
   test "can add property" do
@@ -83,7 +91,8 @@ defmodule TreeTest do
     {:ok, _id, tree} = Tree.add_node(tree)
     {:ok, tree} = Tree.add_property(tree, 1, 'AB', 'yo!')
     
-    assert tree.nodes[1].properties == %{'AB' => 'yo!'}
+    assert tree.nodes[1].properties === %{'AB' => 'yo!'}
+    assert Tree.add_property(tree, 99, 'AB', 'yo!') |> elem(0) === :error
   end
   
   test "can delete property" do
@@ -96,6 +105,7 @@ defmodule TreeTest do
     {:ok, tree} = Tree.delete_property(tree, 1, 'AB')
     
     assert is_nil tree.nodes[1].properties['AB']
+    assert Tree.delete_property(tree, 99, 'AB') |> elem(0) === :error
   end
   
   test "can delete properties" do
@@ -106,5 +116,41 @@ defmodule TreeTest do
     {:ok, tree} = Tree.delete_properties(tree, 1)
     
     assert tree.nodes[1].properties === %{}
+    assert Tree.delete_properties(tree, 99) |> elem(0) === :error
+  end
+  
+  # NODES DELEGATION
+  
+  test "can returns children" do
+    tree = Tree.new
+    {:ok, _id, tree} = Tree.add_node(tree)
+    #
+    {:ok, _id, tree} = Tree.add_child_node(tree, 1)
+    {:ok, _id, tree} = Tree.add_child_node(tree, 1)
+    
+    assert Tree.children(tree, 1) |> Enum.count === 2
+    assert Tree.children(tree, 99) |> elem(0) === :error
+  end
+  
+  test "can returns descendants" do
+    tree = Tree.new
+    {:ok, _id, tree} = Tree.add_node(tree)
+    #
+    {:ok, _id, tree} = Tree.add_child_node(tree, 1)
+    {:ok, _id, tree} = Tree.add_child_node(tree, 1)
+    
+    assert Tree.descendants(tree, 1) |> Enum.count === 2
+    assert Tree.descendants(tree, 99) |> elem(0) === :error
+  end
+  
+  test "can returns ancestors" do
+    tree = Tree.new
+    {:ok, _id, tree} = Tree.add_node(tree)
+    #
+    {:ok, _id, tree} = Tree.add_child_node(tree, 1)
+    {:ok, _id, tree} = Tree.add_child_node(tree, 1)
+    
+    assert Tree.ancestors(tree, 2) |> Enum.count === 1
+    assert Tree.ancestors(tree, 99) |> elem(0) === :error
   end
 end

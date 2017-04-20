@@ -22,6 +22,7 @@ defmodule NestedSet.Node do
   end
   
   # NODE API
+  
   @spec add_property(t, String.t, String.t) :: t
   def add_property(node, key, value) do
     %{node | properties: Map.put(node.properties, key, value)}
@@ -61,37 +62,44 @@ defmodule NestedSet.Node do
   def leaves_count(nodes), do: leaves(nodes) |> Enum.count
   
   @spec children(list_of_nodes, t) :: list_of_nodes
+  def children(_nodes, node) when is_nil(node), do: {:error, "Node not found."}
   def children(nodes, node) do
     nodes
     |> Enum.filter(fn(n) -> n.parent_id === node.id end)
   end
   
   @spec children_count(list_of_nodes, t) :: integer
+  def children_count(_nodes, node) when is_nil(node), do: {:error, "Node not found."}
   def children_count(nodes, node), do: children(nodes, node) |> Enum.count
   
   @spec descendants(list_of_nodes, t) :: list_of_nodes
+  def descendants(_nodes, node) when is_nil(node), do: {:error, "Node not found."}
   def descendants(nodes, node) do
     nodes
     |> Enum.filter(fn(n) -> node.lft < n.lft && n.lft < node.rgt end)
   end
   
   @spec self_and_descendants(list_of_nodes, t) :: list_of_nodes
+  def self_and_descendants(_nodes, node) when is_nil(node), do: {:error, "Node not found."}
   def self_and_descendants(nodes, node) do
     [node | descendants(nodes, node)]
   end
   
   @spec ancestors(list_of_nodes, t) :: list_of_nodes
+  def ancestors(_nodes, node) when is_nil(node), do: {:error, "Node not found."}
   def ancestors(nodes, node) do
     nodes
     |> Enum.filter(fn(n) -> n.lft < node.lft && node.lft < n.rgt end)
   end
   
   @spec ancestors_and_self(list_of_nodes, t) :: list_of_nodes
+  def ancestors_and_self(_nodes, node) when is_nil(node), do: {:error, "Node not found."}
   def ancestors_and_self(nodes, node) do
     [node | Enum.reverse(ancestors(nodes, node))]
     |> Enum.reverse
   end
   
   @spec depth(list_of_nodes, t) :: integer
+  def depth(_nodes, node) when is_nil(node), do: {:error, "Node not found."}
   def depth(nodes, node), do: ancestors_and_self(nodes, node) |> Enum.count
 end
