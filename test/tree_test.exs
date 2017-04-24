@@ -25,19 +25,11 @@ defmodule TreeTest do
     assert id === 3
     assert 3 === tree.nodes |> Enum.count
     
-    assert tree.nodes[1].lft === 1
-    assert tree.nodes[1].rgt === 6
-    assert tree.nodes[1].parent_id === :none
-    
-    assert tree.nodes[2].lft === 2
-    assert tree.nodes[2].rgt === 5
+    assert tree.nodes[1].parent_id === :none    
     assert tree.nodes[2].parent_id === 1
-    
-    assert tree.nodes[3].lft === 3
-    assert tree.nodes[3].rgt === 4
     assert tree.nodes[3].parent_id === 2
     
-    assert Tree.add_child_node(tree, 99) |> elem(0) === :error
+    assert Tree.add_child_node(tree, :"99") |> elem(0) === :error
   end
   
   test "can delete node" do
@@ -52,8 +44,6 @@ defmodule TreeTest do
     assert id === 3
     assert 1 === tree.nodes |> Enum.count
     
-    assert tree.nodes[1].lft === 1
-    assert tree.nodes[1].rgt === 2
     assert tree.nodes[1].parent_id === :none
     
     assert Tree.delete(tree, 99) |> elem(0) === :error
@@ -69,21 +59,13 @@ defmodule TreeTest do
     
     assert id === 3
     
-    assert tree.nodes[1].lft === 1
-    assert tree.nodes[1].rgt === 4
     assert tree.nodes[1].parent_id === :none
-
-    assert tree.nodes[2].lft === 5
-    assert tree.nodes[2].rgt === 6
     assert tree.nodes[2].parent_id === :none
-    
-    assert tree.nodes[3].lft === 2
-    assert tree.nodes[3].rgt === 3
     assert tree.nodes[3].parent_id === 1
     
     assert Tree.move_to_child_of(tree, 99, 100) |> elem(0) === :error
-    assert Tree.move_to_child_of(tree, 1, 100) |> elem(0) === :error
     assert Tree.move_to_child_of(tree, 1, 99) |> elem(0) === :error
+    assert Tree.move_to_child_of(tree, 99, 1) |> elem(0) === :error
   end
   
   test "can add property" do
@@ -152,5 +134,16 @@ defmodule TreeTest do
     
     assert Tree.ancestors(tree, 2) |> Enum.count === 1
     assert Tree.ancestors(tree, 99) |> elem(0) === :error
+  end
+  
+  test "can returns siblings" do
+    tree = Tree.new
+    {:ok, _id, tree} = Tree.add_node(tree)
+    #
+    {:ok, _id, tree} = Tree.add_child_node(tree, 1)
+    {:ok, _id, tree} = Tree.add_child_node(tree, 1)
+    
+    assert Tree.siblings(tree, 2) === [tree.nodes[3]]
+    assert Tree.siblings(tree, 99) |> elem(0) === :error
   end
 end

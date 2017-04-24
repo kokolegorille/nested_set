@@ -4,14 +4,14 @@ defmodule NestedSet.Node do
   @type t :: %Node{ 
     id: optional_integer, 
     parent_id: optional_integer, 
-    lft: optional_integer, 
-    rgt: optional_integer, 
+    children_ids: [],
     properties: map
   }
+  @type map_of_nodes :: map
   @type list_of_nodes :: [t]
   
   defstruct [
-    id: :none, parent_id: :none, lft: :none, rgt: :none,
+    id: :none, parent_id: :none, children_ids: [],
     #
     properties: %{}
   ]
@@ -39,67 +39,93 @@ defmodule NestedSet.Node do
   end
   
   # NODES COLLECTION API
-  
-  @spec roots(list_of_nodes) :: list_of_nodes
+
+  @spec roots(map_of_nodes) :: list_of_nodes
   def roots(nodes) do
-    nodes 
-    |> Enum.filter(fn(node) -> node.parent_id === :none end)
+    nodes
+    |> Map.values
+    |> Enum.filter(fn(n) -> n.parent_id === :none end)
   end
-  
-  @spec root(list_of_nodes) :: t
+
+  @spec root(map_of_nodes) :: t
   def root(nodes) do
-    roots(nodes) 
+    roots(nodes)
     |> List.first
   end
-  
-  @spec leaves(list_of_nodes) :: list_of_nodes
+
+  @spec leaves(map_of_nodes) :: list_of_nodes
   def leaves(nodes) do
     nodes
-    |> Enum.filter(fn(n) -> n.rgt - n.lft === 1 end)
+    |> Map.values
+    |> Enum.filter(fn(n) -> n.children_ids === [] end)
   end
-  
-  @spec leaves_count(list_of_nodes) :: integer
+
+  @spec leaves_count(map_of_nodes) :: integer
   def leaves_count(nodes), do: leaves(nodes) |> Enum.count
-  
-  @spec children(list_of_nodes, t) :: list_of_nodes
+
+  @spec children(map_of_nodes, t) :: list_of_nodes
   def children(_nodes, node) when is_nil(node), do: {:error, "Node not found."}
   def children(nodes, node) do
-    nodes
-    |> Enum.filter(fn(n) -> n.parent_id === node.id end)
+    node.children_ids |> Enum.map(& nodes[&1])
   end
-  
-  @spec children_count(list_of_nodes, t) :: integer
+
+  @spec children_count(map_of_nodes, t) :: integer
   def children_count(_nodes, node) when is_nil(node), do: {:error, "Node not found."}
   def children_count(nodes, node), do: children(nodes, node) |> Enum.count
-  
-  @spec descendants(list_of_nodes, t) :: list_of_nodes
-  def descendants(_nodes, node) when is_nil(node), do: {:error, "Node not found."}
+
+  @spec descendants(map_of_nodes, t) :: list_of_nodes
+  def descendants(_nodes, node) when is_nil(node), do: {:error, "Node not found."}  
   def descendants(nodes, node) do
-    nodes
-    |> Enum.filter(fn(n) -> node.lft < n.lft && n.lft < node.rgt end)
+    children = node.children_ids |> Enum.map(& nodes[&1])    
+    if children |> Enum.count > 0 do
+      (children ++ (children |> Enum.map(& descendants(nodes, &1))))
+      |> List.flatten
+    else
+      []
+    end
   end
   
-  @spec self_and_descendants(list_of_nodes, t) :: list_of_nodes
+  @spec self_and_descendants(map_of_nodes, t) :: list_of_nodes
   def self_and_descendants(_nodes, node) when is_nil(node), do: {:error, "Node not found."}
   def self_and_descendants(nodes, node) do
     [node | descendants(nodes, node)]
   end
-  
-  @spec ancestors(list_of_nodes, t) :: list_of_nodes
+
+  @spec ancestors(map_of_nodes, t) :: list_of_nodes
   def ancestors(_nodes, node) when is_nil(node), do: {:error, "Node not found."}
   def ancestors(nodes, node) do
-    nodes
-    |> Enum.filter(fn(n) -> n.lft < node.lft && node.lft < n.rgt end)
+    if node.parent_id === :none do
+      []
+    else
+      parent = nodes[node.parent_id]
+      [parent | ancestors(nodes, parent)]
+    end
   end
-  
-  @spec ancestors_and_self(list_of_nodes, t) :: list_of_nodes
+
+  @spec ancestors_and_self(map_of_nodes, t) :: list_of_nodes
   def ancestors_and_self(_nodes, node) when is_nil(node), do: {:error, "Node not found."}
   def ancestors_and_self(nodes, node) do
-    [node | Enum.reverse(ancestors(nodes, node))]
-    |> Enum.reverse
+    [node | ancestors(nodes, node)]
   end
-  
-  @spec depth(list_of_nodes, t) :: integer
+
+  @spec siblings(map_of_nodes, t) :: list_of_nodes
+  def siblings(_nodes, node) when is_nil(node), do: {:error, "Node not found."}
+  def siblings(nodes, node) do
+    self_and_siblings(nodes, node) |> List.delete(node)
+  end
+
+  @spec self_and_siblings(map_of_nodes, t) :: list_of_nodes
+  def self_and_siblings(_nodes, node) when is_nil(node), do: {:error, "Node not found."}
+  def self_and_siblings(nodes, node) do
+    if node.parent_id === :none do
+      roots(nodes)
+    else
+      parent = nodes[node.parent_id]
+      children(nodes, parent)
+    end
+  end
+
+  @spec depth(map_of_nodes, t) :: integer
   def depth(_nodes, node) when is_nil(node), do: {:error, "Node not found."}
   def depth(nodes, node), do: ancestors_and_self(nodes, node) |> Enum.count
 end
