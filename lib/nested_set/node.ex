@@ -66,7 +66,7 @@ defmodule NestedSet.Node do
   @spec children(map_of_nodes, t) :: list_of_nodes
   def children(_nodes, node) when is_nil(node), do: {:error, "Node not found."}
   def children(nodes, node) do
-    node.children_ids |> Enum.map(& nodes[&1])
+    node.children_ids |> Enum.map(& nodes[&1]) |> Enum.reverse
   end
 
   @spec children_count(map_of_nodes, t) :: integer
@@ -76,7 +76,7 @@ defmodule NestedSet.Node do
   @spec descendants(map_of_nodes, t) :: list_of_nodes
   def descendants(_nodes, node) when is_nil(node), do: {:error, "Node not found."}  
   def descendants(nodes, node) do
-    children = node.children_ids |> Enum.map(& nodes[&1])    
+    children = children(nodes, node)  
     if children |> Enum.count > 0 do
       (children ++ (children |> Enum.map(& descendants(nodes, &1))))
       |> List.flatten
@@ -98,14 +98,16 @@ defmodule NestedSet.Node do
       []
     else
       parent = nodes[node.parent_id]
-      [parent | ancestors(nodes, parent)]
+      [parent | Enum.reverse(ancestors(nodes, parent))]
+      |> Enum.reverse
     end
   end
 
   @spec ancestors_and_self(map_of_nodes, t) :: list_of_nodes
   def ancestors_and_self(_nodes, node) when is_nil(node), do: {:error, "Node not found."}
   def ancestors_and_self(nodes, node) do
-    [node | ancestors(nodes, node)]
+    [node | Enum.reverse(ancestors(nodes, node))]
+    |> Enum.reverse
   end
 
   @spec siblings(map_of_nodes, t) :: list_of_nodes

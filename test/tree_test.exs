@@ -103,6 +103,46 @@ defmodule TreeTest do
   
   # NODES DELEGATION
   
+  test "can returns roots" do
+    tree = Tree.new
+    {:ok, _id, tree} = Tree.add_node(tree)
+    {:ok, _id, tree} = Tree.add_node(tree)
+    {:ok, id, tree} = Tree.add_node(tree)
+    #
+    {:ok, id, tree} = Tree.add_child_node(tree, id)
+    {:ok, _id, tree} = Tree.add_child_node(tree, id)
+    
+    assert tree |> Tree.roots |> Enum.map(& &1.id) === [1, 2, 3]
+  end
+  
+  test "can returns root" do
+    tree = Tree.new
+    {:ok, id, tree} = Tree.add_node(tree)
+    #
+    {:ok, id, tree} = Tree.add_child_node(tree, id)
+    {:ok, _id, tree} = Tree.add_child_node(tree, id)
+    
+    assert Tree.root(tree).id === 1
+  end
+  
+  test "can returns leaves" do
+    tree = Tree.new
+    {:ok, id, tree} = Tree.add_node(tree)
+    {:ok, _id, tree} = Tree.add_child_node(tree, id)
+    {:ok, _id, tree} = Tree.add_child_node(tree, id)
+    
+    assert tree |> Tree.leaves |> Enum.map(& &1.id) === [2, 3]
+  end
+  
+  test "can returns leaves_count" do
+    tree = Tree.new
+    {:ok, id, tree} = Tree.add_node(tree)
+    {:ok, _id, tree} = Tree.add_child_node(tree, id)
+    {:ok, _id, tree} = Tree.add_child_node(tree, id)
+    
+    assert tree |> Tree.leaves_count === 2
+  end
+  
   test "can returns children" do
     tree = Tree.new
     {:ok, _id, tree} = Tree.add_node(tree)
@@ -110,8 +150,29 @@ defmodule TreeTest do
     {:ok, _id, tree} = Tree.add_child_node(tree, 1)
     {:ok, _id, tree} = Tree.add_child_node(tree, 1)
     
-    assert Tree.children(tree, 1) |> Enum.count === 2
+    assert tree |> Tree.children(1) |> Enum.map(& &1.id) == [2, 3]
     assert Tree.children(tree, 99) |> elem(0) === :error
+  end
+  
+  test "can returns children in the right order" do
+    tree = Tree.new
+    {:ok, _id, tree} = Tree.add_node(tree)
+    #
+    {:ok, _id, tree} = Tree.add_child_node(tree, 1)
+    {:ok, _id, tree} = Tree.add_child_node(tree, 1)
+    {:ok, _id, tree} = Tree.add_child_node(tree, 1)
+    
+    assert tree |> Tree.children(1) |> Enum.map(& &1.id) == [2, 3, 4]
+  end
+  
+  test "can returns children_count" do
+    tree = Tree.new
+    {:ok, _id, tree} = Tree.add_node(tree)
+    #
+    {:ok, _id, tree} = Tree.add_child_node(tree, 1)
+    {:ok, _id, tree} = Tree.add_child_node(tree, 1)
+    
+    assert Tree.children(tree, 1) |> Enum.count === 2
   end
   
   test "can returns descendants" do
@@ -125,6 +186,32 @@ defmodule TreeTest do
     assert Tree.descendants(tree, 99) |> elem(0) === :error
   end
   
+  test "can returns descendants in the right order" do
+    tree = Tree.new
+    {:ok, id, tree} = Tree.add_node(tree)
+    #
+    {:ok, _id, tree} = Tree.add_child_node(tree, id)
+    
+    {:ok, id, tree} = Tree.add_child_node(tree, id)
+    {:ok, id, tree} = Tree.add_child_node(tree, id)
+    {:ok, _id, tree} = Tree.add_child_node(tree, id)
+    
+    assert Tree.descendants(tree, 1) |> Enum.map(& &1.id) == [2, 3, 4, 5]
+  end
+  
+  test "can returns self_and_descendants" do
+    tree = Tree.new
+    {:ok, id, tree} = Tree.add_node(tree)
+    #
+    {:ok, _id, tree} = Tree.add_child_node(tree, id)
+    
+    {:ok, id, tree} = Tree.add_child_node(tree, id)
+    {:ok, id, tree} = Tree.add_child_node(tree, id)
+    {:ok, _id, tree} = Tree.add_child_node(tree, id)
+    
+    assert Tree.self_and_descendants(tree, 1) |> Enum.map(& &1.id) == [1, 2, 3, 4, 5]    
+  end
+  
   test "can returns ancestors" do
     tree = Tree.new
     {:ok, _id, tree} = Tree.add_node(tree)
@@ -134,6 +221,34 @@ defmodule TreeTest do
     
     assert Tree.ancestors(tree, 2) |> Enum.count === 1
     assert Tree.ancestors(tree, 99) |> elem(0) === :error
+    
+    assert Tree.ancestors(tree, 2) |> Enum.map(& &1.id) == [1]
+  end
+  
+  test "can returns ancestors in the right order" do
+    tree = Tree.new
+    {:ok, id, tree} = Tree.add_node(tree)
+    #
+    {:ok, _id, tree} = Tree.add_child_node(tree, id)
+    
+    {:ok, id, tree} = Tree.add_child_node(tree, id)
+    {:ok, id, tree} = Tree.add_child_node(tree, id)
+    {:ok, _id, tree} = Tree.add_child_node(tree, id)
+    
+    assert Tree.ancestors(tree, 5) |> Enum.map(& &1.id) == [1, 3, 4]
+  end
+  
+  test "can returns ancestors_and_self" do
+    tree = Tree.new
+    {:ok, id, tree} = Tree.add_node(tree)
+    #
+    {:ok, _id, tree} = Tree.add_child_node(tree, id)
+    
+    {:ok, id, tree} = Tree.add_child_node(tree, id)
+    {:ok, id, tree} = Tree.add_child_node(tree, id)
+    {:ok, _id, tree} = Tree.add_child_node(tree, id)
+    
+    assert Tree.ancestors_and_self(tree, 5) |> Enum.map(& &1.id) == [1, 3, 4, 5]
   end
   
   test "can returns siblings" do
@@ -145,5 +260,29 @@ defmodule TreeTest do
     
     assert Tree.siblings(tree, 2) === [tree.nodes[3]]
     assert Tree.siblings(tree, 99) |> elem(0) === :error
+  end
+  
+  test "can returns self_siblings" do
+    tree = Tree.new
+    {:ok, _id, tree} = Tree.add_node(tree)
+    #
+    {:ok, _id, tree} = Tree.add_child_node(tree, 1)
+    {:ok, _id, tree} = Tree.add_child_node(tree, 1)
+    
+    assert tree |> Tree.self_and_siblings(2) |> Enum.map(& &1.id) == [2, 3]
+  end
+  
+  test "can returns depth" do
+    tree = Tree.new
+    {:ok, _id, tree} = Tree.add_node(tree)
+    {:ok, _id, tree} = Tree.add_node(tree)
+    {:ok, id, tree} = Tree.add_node(tree)
+    #
+    {:ok, id, tree} = Tree.add_child_node(tree, id)
+    {:ok, id, tree} = Tree.add_child_node(tree, id)
+    {:ok, id, tree} = Tree.add_child_node(tree, id)
+    {:ok, _id, tree} = Tree.add_child_node(tree, id)
+    
+    assert tree |> Tree.depth(7) === 5
   end
 end
