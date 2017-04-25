@@ -38,7 +38,6 @@ defmodule NestedSet.Tree do
   
   @spec add_child_node(t, integer, map) :: {atom, integer, t}
   def add_child_node(tree, parent_id, node_params \\ %{}) do
-    
     parent_node = tree.nodes[parent_id]
     
     case is_map(parent_node) do

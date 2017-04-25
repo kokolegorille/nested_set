@@ -38,8 +38,11 @@ defmodule NestedSet.Node do
     %{node | properties: %{}}
   end
   
+  @spec is_leaf?(t) :: boolean
+  def is_leaf?(node), do: node.children_ids === []
+  
   # NODES COLLECTION API
-
+  
   @spec roots(map_of_nodes) :: list_of_nodes
   def roots(nodes) do
     nodes
@@ -57,9 +60,9 @@ defmodule NestedSet.Node do
   def leaves(nodes) do
     nodes
     |> Map.values
-    |> Enum.filter(fn(n) -> n.children_ids === [] end)
+    |> Enum.filter(& is_leaf? &1)
   end
-
+  
   @spec leaves_count(map_of_nodes) :: integer
   def leaves_count(nodes), do: leaves(nodes) |> Enum.count
 
