@@ -26,7 +26,7 @@ defmodule TreeTest do
       assert id === 3
       assert 3 === tree.nodes |> Enum.count
     
-      assert tree.nodes[1].parent_id === :none    
+      assert tree.nodes[1].parent_id === nil    
       assert tree.nodes[2].parent_id === 1
       assert tree.nodes[3].parent_id === 2
     
@@ -45,7 +45,7 @@ defmodule TreeTest do
       assert id === 3
       assert 1 === tree.nodes |> Enum.count
     
-      assert tree.nodes[1].parent_id === :none
+      assert tree.nodes[1].parent_id === nil
     
       assert Tree.delete(tree, 99) |> elem(0) === :error
     end
@@ -60,8 +60,8 @@ defmodule TreeTest do
     
       assert id === 3
     
-      assert tree.nodes[1].parent_id === :none
-      assert tree.nodes[2].parent_id === :none
+      assert tree.nodes[1].parent_id === nil
+      assert tree.nodes[2].parent_id === nil
       assert tree.nodes[3].parent_id === 1
     
       assert Tree.move_to_child_of(tree, 99, 100) |> elem(0) === :error
@@ -72,30 +72,30 @@ defmodule TreeTest do
     test "can add property" do
       tree = Tree.new
       {:ok, _id, tree} = Tree.add_node(tree)
-      {:ok, tree} = Tree.add_property(tree, 1, 'AB', 'yo!')
+      {:ok, tree} = Tree.add_property(tree, 1, "AB", "yo!")
     
-      assert tree.nodes[1].properties === %{'AB' => 'yo!'}
-      assert Tree.add_property(tree, 99, 'AB', 'yo!') |> elem(0) === :error
+      assert tree.nodes[1].properties === %{"AB" => "yo!"}
+      assert Tree.add_property(tree, 99, "AB", "yo!") |> elem(0) === :error
     end
   
     test "can delete property" do
       tree = Tree.new
       {:ok, _id, tree} = Tree.add_node(tree)
-      {:ok, tree} = Tree.add_property(tree, 1, 'AB', 'yo!')
+      {:ok, tree} = Tree.add_property(tree, 1, "AB", "yo!")
     
-      assert tree.nodes[1].properties === %{'AB' => 'yo!'}
+      assert tree.nodes[1].properties === %{"AB" => "yo!"}
     
-      {:ok, tree} = Tree.delete_property(tree, 1, 'AB')
+      {:ok, tree} = Tree.delete_property(tree, 1, "AB")
     
-      assert is_nil tree.nodes[1].properties['AB']
-      assert Tree.delete_property(tree, 99, 'AB') |> elem(0) === :error
+      assert is_nil tree.nodes[1].properties["AB"]
+      assert Tree.delete_property(tree, 99, "AB") |> elem(0) === :error
     end
   
     test "can delete properties" do
       tree = Tree.new
       {:ok, _id, tree} = Tree.add_node(tree)
-      {:ok, tree} = Tree.add_property(tree, 1, 'AB', 'yo!')
-      {:ok, tree} = Tree.add_property(tree, 1, 'CD', '!oy')
+      {:ok, tree} = Tree.add_property(tree, 1, "AB", "yo!")
+      {:ok, tree} = Tree.add_property(tree, 1, "CD", "!oy")
       {:ok, tree} = Tree.delete_properties(tree, 1)
     
       assert tree.nodes[1].properties === %{}

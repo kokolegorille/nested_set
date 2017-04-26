@@ -1,6 +1,6 @@
 defmodule NestedSet.Node do
   alias __MODULE__
-  @type optional_integer :: integer | :none
+  @type optional_integer :: integer | nil
   @type t :: %Node{ 
     id: optional_integer, 
     parent_id: optional_integer, 
@@ -11,7 +11,7 @@ defmodule NestedSet.Node do
   @type list_of_nodes :: [t]
   
   defstruct [
-    id: :none, parent_id: :none, children_ids: [],
+    id: nil, parent_id: nil, children_ids: [],
     #
     properties: %{}
   ]
@@ -25,7 +25,7 @@ defmodule NestedSet.Node do
   
   @spec add_property(t, String.t, String.t) :: t
   def add_property(node, key, value) do
-    %{node | properties: Map.put(node.properties, key, value)}
+    %{node | properties: Map.put(node.properties, to_string(key), to_string(value))}
   end
   
   @spec delete_property(t, String.t) :: t
@@ -47,7 +47,7 @@ defmodule NestedSet.Node do
   def roots(nodes) do
     nodes
     |> Map.values
-    |> Enum.filter(fn(n) -> n.parent_id === :none end)
+    |> Enum.filter(fn(n) -> n.parent_id === nil end)
   end
 
   @spec root(map_of_nodes) :: t
@@ -97,7 +97,7 @@ defmodule NestedSet.Node do
   @spec ancestors(map_of_nodes, t) :: list_of_nodes
   def ancestors(_nodes, node) when is_nil(node), do: {:error, "Node not found."}
   def ancestors(nodes, node) do
-    if node.parent_id === :none do
+    if node.parent_id === nil do
       []
     else
       parent = nodes[node.parent_id]
@@ -122,7 +122,7 @@ defmodule NestedSet.Node do
   @spec self_and_siblings(map_of_nodes, t) :: list_of_nodes
   def self_and_siblings(_nodes, node) when is_nil(node), do: {:error, "Node not found."}
   def self_and_siblings(nodes, node) do
-    if node.parent_id === :none do
+    if node.parent_id === nil do
       roots(nodes)
     else
       parent = nodes[node.parent_id]
